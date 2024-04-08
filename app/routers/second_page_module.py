@@ -1,5 +1,9 @@
 import re
+from fastapi import APIRouter
 
+router = APIRouter(prefix="/second_page", tags=["Questionnaire_Definer"])
+
+@router.get("/parse_qna")
 async def parse_questions_and_answers(json_data):
             """
             Parses questions and their respective answers from a JSON data structure.
@@ -10,13 +14,14 @@ async def parse_questions_and_answers(json_data):
             Returns:
             - dict: A dictionary with question numbers as keys and a sub-dictionary containing the question text and a list of answers.
             """
-            questions_and_answers = {}
+            questions_and_answers = dict()
             for q_key, q_value in json_data.items():
                 question_text = q_value['question']
                 answers = [answer for _, answer in q_value['answers'].items()]
                 questions_and_answers[q_key] = {'question': question_text, 'answers': answers}
             return questions_and_answers
 
+@router.get("/parse_texttojson")
 async def parse_text_to_json(text_content):
             """
             Converts structured text content into a JSON-like dictionary, parsing questions and their answers.
@@ -27,7 +32,7 @@ async def parse_text_to_json(text_content):
             Returns:
             - dict: A dictionary representing the parsed content with questions as keys and their details (question text and answers) as values.
             """
-            data = {}
+            data = dict()
             question_re = re.compile(r'^(\d+)\.\s+(.*)')
             answer_re = re.compile(r'^\s+-\s+(.*)')
             current_question = ""
@@ -48,6 +53,7 @@ async def parse_text_to_json(text_content):
 
             return data
 
+@router.get("/rename_columns")
 async def rename_columns(df, new_column_names):
             """
             Renames dataframe columns based on a list of new column names.
@@ -60,4 +66,4 @@ async def rename_columns(df, new_column_names):
             - pd.DataFrame: A DataFrame with updated column names.
             """
             mapping = {old: new for old, new in zip(df.columns, new_column_names) if new}
-            return df.rename(columns=mapping, inplace=False)
+            return df.rename(columns=mapping, inplace=False).to_dict()

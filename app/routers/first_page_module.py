@@ -3,7 +3,7 @@ import numpy as np
 
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter( prefix="/first_page", tags=["Data_Cleaner_Pre_Processor"])
 
 async def merger(df_list, phonenum_list):
     """
@@ -33,7 +33,7 @@ async def merger(df_list, phonenum_list):
 
 
 
-@router.get("/process_file/", tags=["processing"])
+@router.get("/process_file")
 async def process_file(uploaded_file):
     """
     Process the uploaded CSV file to extract and transform phone number data
