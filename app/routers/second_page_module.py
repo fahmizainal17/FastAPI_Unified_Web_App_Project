@@ -1,10 +1,10 @@
 import re
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile
 
 router = APIRouter(prefix="/second_page", tags=["Questionnaire_Definer"])
 
-@router.get("/parse_qna")
-async def parse_questions_and_answers(json_data):
+@router.post("/parse_qna")
+async def parse_questions_and_answers(json_data:UploadFile):
             """
             Parses questions and their respective answers from a JSON data structure.
 
@@ -21,8 +21,8 @@ async def parse_questions_and_answers(json_data):
                 questions_and_answers[q_key] = {'question': question_text, 'answers': answers}
             return questions_and_answers
 
-@router.get("/parse_texttojson")
-async def parse_text_to_json(text_content):
+@router.post("/parse_texttojson")
+async def parse_text_to_json(text_content:UploadFile):
             """
             Converts structured text content into a JSON-like dictionary, parsing questions and their answers.
 
@@ -37,7 +37,7 @@ async def parse_text_to_json(text_content):
             answer_re = re.compile(r'^\s+-\s+(.*)')
             current_question = ""
 
-            for line in text_content.splitlines():
+            for line in text_content.file.splitlines():
                 question_match = question_re.match(line)
                 answer_match = answer_re.match(line)
 
@@ -53,7 +53,7 @@ async def parse_text_to_json(text_content):
 
             return data
 
-@router.get("/rename_columns")
+@router.post("/rename_columns")
 async def rename_columns(df, new_column_names):
             """
             Renames dataframe columns based on a list of new column names.

@@ -1,0 +1,4 @@
+app/*.db
+app/__pycache__
+app/.pytest_cache
+app/.env

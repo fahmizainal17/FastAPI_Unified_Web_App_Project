@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile
 
 router = APIRouter( prefix="/first_page", tags=["Data_Cleaner_Pre_Processor"])
 
@@ -33,8 +33,8 @@ async def merger(df_list, phonenum_list):
 
 
 
-@router.get("/process_file")
-async def process_file(uploaded_file):
+@router.post("/process_file")
+async def process_file(uploaded_file:UploadFile):
     """
     Process the uploaded CSV file to extract and transform phone number data
     and user response data for analysis.
@@ -70,7 +70,7 @@ async def process_file(uploaded_file):
     total_pickup = []
     total_of_pickups = []
 
-    df = pd.read_csv(uploaded_file, skiprows=1, names=range(100), engine='python')
+    df = pd.read_csv(uploaded_file.file, skiprows=1, names=range(100), engine='python')
 
     df.dropna(axis='columns', how='all', inplace=True)
 
@@ -103,7 +103,7 @@ async def process_file(uploaded_file):
     df_list.append(df_complete)
     
     # Call the merger function at the end of process_file to merge df_list and phonenum_list
-    df_merge, phonenum_combined = merger([df_complete], [phonenum_list])  # Adjusted to pass lists of DataFrames
+    df_merge, phonenum_combined = await merger([df_complete], [phonenum_list])  # Adjusted to pass lists of DataFrames
 
     return {
         "df_complete": df_complete.to_dict(),
