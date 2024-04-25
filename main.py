@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from routers.first_page_module import router as first_page_router
-from routers.second_page_module import router as second_page_router
-from routers.third_page_module import router as third_page_router
+from app.routers.first_page_module import router as first_page_router
+from app.routers.second_page_module import router as second_page_router
+from app.routers.third_page_module import router as third_page_router
 import logging
 from fastapi import FastAPI, status, HTTPException, Header, APIRouter
 from fastapi.responses import HTMLResponse
@@ -20,7 +20,7 @@ app = FastAPI(
 # def root():
 #     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"}
 
-@app.get("/welcome_page", response_class=HTMLResponse, summary="Welcome_Page", tags= ["Root_Of_FastAPI_Application"])
+@app.get("/", response_class=HTMLResponse, summary="Welcome_Page", tags= ["Root_Of_FastAPI_Application"])
 def root():
     html_content = """
     <!DOCTYPE html>
@@ -61,9 +61,9 @@ def root():
     return HTMLResponse(content=html_content)
 
 
-app.include_router(first_page_router, tags=["Data_Cleaner_Pre_Processor"])
-app.include_router(second_page_router, tags=["Questionnaire_Definer"])
-app.include_router(third_page_router, tags=["Keypress_Decoder"])
+app.include_router(first_page_router, prefix="/first_page", tags=["Data_Cleaner_Pre_Processor"])
+app.include_router(second_page_router, prefix="/second_page", tags=["Questionnaire_Definer"])
+app.include_router(third_page_router, prefix="/third_page", tags=["Keypress_Decoder"])
 
 # Run the application
 if __name__ == "__main__":

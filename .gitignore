@@ -1,3 +1,6 @@
+# gitignore files
+Batu_Pahat_IVR_Raw_Results_8April_2024/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
