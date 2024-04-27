@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from routers.first_page_module import router as first_page_router
 from routers.second_page_module import router as second_page_router
 from routers.third_page_module import router as third_page_router
-import logging
-from fastapi import FastAPI, status, HTTPException, Header, APIRouter
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 
@@ -18,7 +17,7 @@ app = FastAPI(
 
 # @app.get("/", status_code=status.HTTP_200_OK)
 # def root():
-#     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"} #
+#     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"} ##
 
 @app.get("/welcome_page", response_class=HTMLResponse, summary="Welcome_Page", tags= ["Root_Of_FastAPI_Application"])
 def root():
