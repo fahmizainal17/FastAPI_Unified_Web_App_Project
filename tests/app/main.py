@@ -68,3 +68,5 @@ app.include_router(third_page_router, tags=["Keypress_Decoder"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+    #
