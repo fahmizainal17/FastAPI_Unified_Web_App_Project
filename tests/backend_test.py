@@ -1,27 +1,35 @@
-from test_main import app
-from routers.test_first_page_module import merger,process_file
-import json
-from json import loads #dumps convert dict to json and loads convert json to dict
-import os
+#pytest .\tests\backend_test.py
 import pytest
 import pandas as pd
-from io import StringIO
+from io import StringIO, BytesIO
+import json
 
-# test connection 
+# Correct imports based on your project structure
+from tests.test_main import app
+from tests.routers.test_first_page_module import merger, process_file
+from tests.routers.test_second_page_module import parse_questions_and_answers, parse_text_to_json, rename_columns
+from tests.routers.test_third_page_module import parse_text_to_json_third_page, custom_sort, classify_income
+
+# --------------------------- Connection Test ---------------------------
+
 @app.get("/")
 def read_main():
-    return {"msg": "Hello World"}
+    return {"message": "Welcome to the Unit Testing"}
 
-# Fixture for creating DataFrame input for testing
+# --------------------------- First Page Module Tests ---------------------------
+
 @pytest.fixture
 def create_data():
-    data = """
-    [{"PhoneNo": "1234567890", "FlowNo_2": "1", "FlowNo_3": "2", "FlowNo_4": "3", "FlowNo_5": "4", "FlowNo_6": "5"},
-     {"PhoneNo": "0987654321", "FlowNo_2": "1", "FlowNo_3": "2", "FlowNo_4": "3", "FlowNo_5": "4", "FlowNo_6": "5"}]
-    """
-    return pd.read_json(StringIO(data), orient='records')
+    """Fixture for creating DataFrame input for testing."""
+    data = [
+        {"PhoneNo": "1234567890", "UserKeyPress": "FlowNo_2=1"},
+        {"PhoneNo": "0987654321", "UserKeyPress": "FlowNo_2=2"}
+    ]
+    data_json = json.dumps(data)
+    return pd.read_json(StringIO(data_json), orient='records')
 
-def test_merger(create_data):
+def test_merger(create_data: pd.DataFrame):
+    """Test the merger function from the first page module."""
     df_list = [create_data]
     phonenum_list = [create_data[['PhoneNo']]]
     df_merge, phonenum_combined = merger(df_list, phonenum_list)
@@ -31,129 +39,129 @@ def test_merger(create_data):
     assert not phonenum_combined.empty
     assert 'phonenum' in phonenum_combined.columns
 
-def test_process_file(create_data):
-    # Convert DataFrame to JSON string format as expected by process_file
+def test_process_file(create_data: pd.DataFrame):
     df_json = create_data.to_json(orient='records')
     result = process_file(df_json)
     
     assert 'df_complete' in result
-    assert len(result['df_complete']) == 2  # Checking if the processing results in two entries
+    assert len(result['df_complete']) == 2  # Expecting 2 entries after processing
     assert result['total_calls'] == 2
     assert result['total_pickup'] == 2
     assert 'df_merge' in result
-    assert not result['df_merge'].empty
+    assert not result['df_merge'].empty  # Should not be empty
 
-# Running the pytest directly in script (only for demonstration)
+# --------------------------- Second Page Module Tests ---------------------------
+
+from fastapi import UploadFile
+from starlette.datastructures import UploadFile as StarletteUploadFile
+
+@pytest.fixture
+def json_data_input():
+    data = json.dumps({
+        "Q1": {
+            "question": "Did you vote in the Petaling Jaya Parliament?",
+            "answers": {
+                "FlowNo_2=1": "Yes",
+                "FlowNo_2=2": "No"
+            }
+        },
+        "Q2": {
+            "question": "Do you agree with the cancellation of the PJD Link?",
+            "answers": {
+                "FlowNo_3=1": "Yes",
+                "FlowNo_3=2": "No",
+                "FlowNo_3=3": "Unsure",
+                "FlowNo_3=4": "Does not mind"
+            }
+        }
+    })
+    return UploadFile(file=BytesIO(data.encode('utf-8')), filename="test.json")
+
+
+@pytest.fixture
+def text_content_input():
+    content = (
+        "1. Did you vote in the Batu Pahat Parliament?\n"
+        "   - Yes\n"
+        "   - No\n\n"
+        "2. Ethnicity\n"
+        "   - Malay\n"
+        "   - Chinese\n"
+        "   - Indian\n"
+        "   - Others"
+    )
+    return UploadFile(file=BytesIO(content.encode('utf-8')), filename="test.txt")
+
+
+def test_parse_questions_and_answers(json_data_input: UploadFile):
+    """Test the parsing of questions and answers from JSON for the second page module."""
+    json_data_input.file.seek(0)  # Rewind the file to the start
+    data = json.load(json_data_input.file)  # Reading and decoding JSON data correctly
+    parsed_data = parse_questions_and_answers(data)  # Pass the dictionary data
+    assert isinstance(parsed_data, dict)
+    assert 'Q1' in parsed_data
+    assert 'Q2' in parsed_data
+    assert parsed_data['Q1']['question'] == "Did you vote in the Petaling Jaya Parliament?"
+    assert parsed_data['Q1']['answers']['FlowNo_2=1'] == "Yes"
+    assert parsed_data['Q1']['answers']['FlowNo_2=2'] == "No"
+    
+
+
+def test_parse_text_to_json(text_content_input: UploadFile):
+    """Test the conversion of structured text to JSON for parsing questions and answers."""
+    parsed_data = parse_text_to_json(text_content_input)
+    assert "Q1" in parsed_data
+    assert parsed_data["Q1"]["question"] == "Did you vote in the Batu Pahat Parliament?"
+    assert "FlowNo_2=1" in parsed_data["Q1"]["answers"]
+    assert parsed_data["Q1"]["answers"]["FlowNo_2=1"] == "Yes"
+    assert "Q2" in parsed_data
+    assert parsed_data["Q2"]["question"] == "Ethnicity"
+    assert "FlowNo_3=1" in parsed_data["Q2"]["answers"]
+    assert parsed_data["Q2"]["answers"]["FlowNo_3=1"] == "Malay"
+
+
+@pytest.fixture
+def dataframe_input():
+    df = pd.DataFrame({
+        'PhoneNo': ['1234567890', '0987654321'],
+        'UserKeyPress': ['FlowNo_2=1', 'FlowNo_2=2']
+    })
+    return df
+
+def test_rename_columns(dataframe_input: pd.DataFrame):
+    """Test renaming DataFrame columns."""
+    new_column_names = ['PhoneNumber', 'UserAction']
+    result = rename_columns(dataframe_input, new_column_names)
+    assert list(result.columns) == new_column_names  # This will now work because result is a DataFrame
+
+
+# --------------------------- Third Page Module Tests ---------------------------
+
+def test_parse_text_to_json_third_page(text_content_input: UploadFile):
+    """Test parsing of text to JSON on the third page, checking adjusted FlowNo."""
+    text_content_input.file.seek(0)  # Ensure the file pointer is at the start
+    content = text_content_input.file.read().decode('utf-8')
+    result = parse_text_to_json_third_page(content)
+    assert "Q1" in result
+    assert result["Q1"]["question"] == "Did you vote in the Batu Pahat Parliament?"
+    assert "FlowNo_2=1" in result["Q1"]["answers"]
+    assert result["Q1"]["answers"]["FlowNo_2=1"] == "Yes"
+    assert "Q2" in result
+    assert result["Q2"]["question"] == "Ethnicity"
+    assert result["Q2"]["answers"]["FlowNo_3=1"] == "Malay"
+
+
+def test_custom_sort():
+    """Test the custom sorting functionality for the third page module."""
+    result = custom_sort("FlowNo_2=3")
+    assert result == {"question_num": 2, "flow_no": 3}
+
+def test_classify_income():
+    """Test classification of income into economic groups for the third page module."""
+    assert classify_income("RM4,850 & below") == {"income_group": "B40"}
+    assert classify_income("RM10,961 to RM15,039") == {"income_group": "T20"}
+
+# --------------------------- Running Pytest Directly ---------------------------
+
 if __name__ == "__main__":
     pytest.main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# client = TestClient(app)
-
-# def test_read_main():
-#     response = client.get("/")
-#     assert response.status_code == 200
-#     assert response.json() == {"msg": "Hello World"}
-
-
-# def test_process_file():
-#     # Setup file paths correctly
-#     base_path = r"C:\Users\User\Desktop\Invoke Project\FastAPI_Unified_App\FastAPI_Unified_Web_App_Project\tests\app\Batu_Pahat_IVR_Raw_Results_8April_2024"
-#     csv_file_path = os.path.join(base_path, "Broadcast_List_Report_for_BARU PAHAT MAC 24 PT4.csv")
-#     json_file_path = os.path.join(base_path, "sample_output.json")
-
-#     # Read the CSV file, handling data types explicitly if necessary
-#     dtype_dict = {'Column1': 'str', 'Column2': 'float'}  # Example: adjust column names and types
-#     test_data = pd.read_csv(csv_file_path, dtype=dtype_dict)
-
-#     # Load expected output
-#     with open(json_file_path, "r") as file:
-#         test_output = json.load(file)
-
-#     # Convert DataFrame to JSON as expected by the API
-#     test_data_json = test_data.to_json(orient='records')
-
-#     # Make a POST request with the properly formatted JSON
-#     response = client.post("/first_page/process_file", json={"df": test_data_json})
-#     assert response.status_code == 200
-#     assert response.json() == test_output
-
-# # Run the test
-# test_process_file()
-
-
-#####################################################################
-# import requests
-# from requests_toolbelt.multipart.encoder import MultipartEncoder
-
-# url = "http://127.0.0.1:8000/first_page/process_file"
-
-# filename = r"C:\Users\User\Desktop\Invoke Project\FastAPI_Unified_App\tests\app\Batu_Pahat_IVR_Raw_Results_8April_2024\Broadcast_List_Report_for_BARU PAHAT MAC 24 PT4.csv"
-
-# m = MultipartEncoder(
-#         fields={'file': ('filename', open(filename, 'rb'), 'text/csv')}
-#     )
-# r = requests.post(url, data=m, headers={'Content-Type': m.content_type}, timeout = 8000)
-# print(r.status_code)
-# assert r.status_code == 200
-
-
-
-#####################################################################
-# import os
-# from fastapi.testclient import TestClient
-# from app.main import app # Import your FastAPI application here
-# from requests_toolbelt.multipart.encoder import MultipartEncoder
-
-# client = TestClient(app)
-
-# def test_process_file():
-#     url = "/first_page/process_file"  # Adjust if your endpoint route is different
-#     filename = r"C:\Users\User\Desktop\Invoke Project\FastAPI_Unified_App\tests\Batu_Pahat_IVR_Raw_Results_8April_2024\Broadcast_List_Report_for_BARU PAHAT MAC 24 PT4.csv"  # Provide path to a test CSV file
-
-#     # Use the actual path of the file in your test environment
-#     filepath = os.path.join(os.path.dirname(__file__), filename)
-
-#     m = MultipartEncoder(
-#         fields={'file': ('filename', open(filepath, 'rb'), 'text/csv')}
-#     )
-
-#     response = client.post(
-#         url,
-#         data=m,
-#         headers={'Content-Type': m.content_type}
-#     )
-
-#     assert response.status_code == 200
-#     ### You can also add more assertions here to check the correctness of the response content
-
-#     ## It's good practice to close the file after opening it
-#     m.fields['file'][1].close()

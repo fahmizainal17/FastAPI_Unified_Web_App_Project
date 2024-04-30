@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from FastAPI_Unified_Web_App_Project.tests.app.routers.test_first_page_module import router as first_page_router
-from FastAPI_Unified_Web_App_Project.tests.app.routers.test_second_page_module import router as second_page_router
-from FastAPI_Unified_Web_App_Project.tests.app.routers.test_third_page_module import router as third_page_router
+from app.routers.first_page_module import router as first_page_router
+from app.routers.second_page_module import router as second_page_router
+from app.routers.third_page_module import router as third_page_router
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
@@ -69,4 +69,3 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
 
-    ##

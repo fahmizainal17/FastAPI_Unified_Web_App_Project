@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/third_page", tags=["Keypress_Decoder"])
 
-async def parse_text_to_json(text_content):
+def parse_text_to_json_third_page(text_content):
             """
             Parses structured text containing survey questions and answers into a JSON-like dictionary.
             Adjusts FlowNo to start from 2 for the first question as specified.
@@ -39,7 +39,7 @@ async def parse_text_to_json(text_content):
             return data
 
 @router.get("/custom_sort")
-async def custom_sort(col):
+def custom_sort(col):
             # Improved regex to capture question and flow numbers accurately
             match = re.match(r"FlowNo_(\d+)=*(\d*)", col)
             if match:
@@ -50,7 +50,7 @@ async def custom_sort(col):
                 return {"question_num":float('inf'),"flow_no":0}
 
 @router.get("/classify_income")
-async def classify_income(income):
+def classify_income(income):
             if income == 'RM4,850 & below':
                 return {"income_group": 'B40'}
             elif income == 'RM4,851 to RM10,960':
@@ -59,7 +59,7 @@ async def classify_income(income):
                 return {"income_group":'T20'}
 
 @router.get("/process_file_content")
-async def process_file_content(uploaded_file):
+def process_file_content(uploaded_file):
             """Process the content of the uploaded file."""
             try:
                 if uploaded_file and uploaded_file.type == "application/json":
@@ -67,13 +67,13 @@ async def process_file_content(uploaded_file):
                     flow_no_mappings = json.loads(uploaded_file.getvalue().decode("utf-8"))
                 else:
                     # Handle plain text file
-                    flow_no_mappings = parse_text_to_json(uploaded_file.getvalue().decode("utf-8"))
+                    flow_no_mappings = parse_text_to_json_third_page(uploaded_file.getvalue().decode("utf-8"))
                 return {"flow_no_mappings":flow_no_mappings, "message" : "Questions and answers parsed successfully.✨", "error":None}
             except Exception as e:
                 return {"flow_no_mappings":None,"message": None,"error": f"Error processing file: {e}"}
             
 @router.get("/flatten_json_structure")
-async def flatten_json_structure(flow_no_mappings):
+def flatten_json_structure(flow_no_mappings):
             """Flatten the JSON structure to simplify the mapping access."""
             if not flow_no_mappings:
                 return {}
