@@ -1,9 +1,8 @@
 from fastapi import FastAPI
-from routers.first_page_module import router as first_page_router
-from routers.second_page_module import router as second_page_router
-from routers.third_page_module import router as third_page_router
-import logging
-from fastapi import FastAPI, status, HTTPException, Header, APIRouter
+from FastAPI_Unified_Web_App_Project.tests.app.routers.test_first_page_module import router as first_page_router
+from FastAPI_Unified_Web_App_Project.tests.app.routers.test_second_page_module import router as second_page_router
+from FastAPI_Unified_Web_App_Project.tests.app.routers.test_third_page_module import router as third_page_router
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 
@@ -18,7 +17,7 @@ app = FastAPI(
 
 # @app.get("/", status_code=status.HTTP_200_OK)
 # def root():
-#     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"}
+#     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"} ###
 
 @app.get("/welcome_page", response_class=HTMLResponse, summary="Welcome_Page", tags= ["Root_Of_FastAPI_Application"])
 def root():
@@ -69,3 +68,5 @@ app.include_router(third_page_router, tags=["Keypress_Decoder"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+    ##

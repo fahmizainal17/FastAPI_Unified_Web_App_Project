@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from .main import app
+from .app.main import app
 from routers.first_page_module import merger,process_file
 import json
 from json import loads #dumps convert dict to json and loads convert json to dict
