@@ -1,4 +1,4 @@
-## Project Structure
+# FastAPI_Unified_Web_App_Project
 
 The project structure is organized as follows:
 
@@ -26,6 +26,39 @@ The project structure is organized as follows:
 - **.gitignore**: File specifying Git ignored paths.
 - **Dockerfile**: Docker configuration file.
 - **README.md**: Project documentation file (you're reading it!).
+
+
+## Tree Structure
+
+```
+FastAPI_Unified_Web_App_Project/
+│
+├── app/
+│   ├── main.py
+│   └── routers/
+│       ├── first_page_module.py
+│       ├── second_page_module.py
+│       ├── third_page_module.py
+│       └── __init__.py
+│
+├── data/
+│
+├── tests/
+│   ├── backend_test.py
+│   ├── endpoint_test.py
+│   ├── test_main.py
+│   └── routers/
+│       ├── test_first_page_module.py
+│       ├── test_second_page_module.py
+│       ├── test_third_page_module.py
+│       └── __init__.py
+│
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+└── README.md
+```
+
 
 ## Usage
 
