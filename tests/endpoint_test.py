@@ -66,7 +66,7 @@ def test_rename_columns():
     assert "UserAction" in response.json()['df'].columns
 
 # ---------------------------------------------------
-# Tests for the Third Page Module
+# Tests for the Third Page Module (4 Endpoints)
 # ---------------------------------------------------
 
 def test_third_page_custom_sort():
