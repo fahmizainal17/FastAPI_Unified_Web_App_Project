@@ -4,6 +4,27 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/third_page", tags=["Keypress_Decoder"])
 
+@router.get("/custom_sort")
+def custom_sort(col):
+            # Improved regex to capture question and flow numbers accurately
+            match = re.match(r"FlowNo_(\d+)=*(\d*)", col)
+            if match:
+                question_num = int(match.group(1))  # Question number
+                flow_no = int(match.group(2)) if match.group(2) else 0  # Flow number, default to 0 if not present
+                return { "question_num" : question_num, "flow_no": flow_no}
+            else:
+                return {"question_num":float('inf'),"flow_no":0}
+
+@router.get("/classify_income")
+def classify_income(income):
+            if income == 'RM4,850 & below':
+                return {"income_group": 'B40'}
+            elif income == 'RM4,851 to RM10,960':
+                return {"income_group":'M40'}
+            elif income in ['RM15,040 & above', 'RM10,961 to RM15,039']:
+                return {"income_group":'T20'}
+
+
 def parse_text_to_json_third_page(text_content):
             """
             Parses structured text containing survey questions and answers into a JSON-like dictionary.
@@ -37,26 +58,6 @@ def parse_text_to_json_third_page(text_content):
                     data[current_question]["answers"][flow_no_key] = answer_text
 
             return data
-
-@router.get("/custom_sort")
-def custom_sort(col):
-            # Improved regex to capture question and flow numbers accurately
-            match = re.match(r"FlowNo_(\d+)=*(\d*)", col)
-            if match:
-                question_num = int(match.group(1))  # Question number
-                flow_no = int(match.group(2)) if match.group(2) else 0  # Flow number, default to 0 if not present
-                return { "question_num" : question_num, "flow_no": flow_no}
-            else:
-                return {"question_num":float('inf'),"flow_no":0}
-
-@router.get("/classify_income")
-def classify_income(income):
-            if income == 'RM4,850 & below':
-                return {"income_group": 'B40'}
-            elif income == 'RM4,851 to RM10,960':
-                return {"income_group":'M40'}
-            elif income in ['RM15,040 & above', 'RM10,961 to RM15,039']:
-                return {"income_group":'T20'}
 
 @router.get("/process_file_content")
 def process_file_content(uploaded_file):
