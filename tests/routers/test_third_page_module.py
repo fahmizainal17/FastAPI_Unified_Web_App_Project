@@ -1,6 +1,7 @@
 import re
 import json
 from fastapi import APIRouter
+from fastapi import UploadFile
 
 router = APIRouter(prefix="/third_page", tags=["Keypress_Decoder"])
 
@@ -60,18 +61,20 @@ def parse_text_to_json_third_page(text_content):
             return data
 
 @router.get("/process_file_content")
-def process_file_content(uploaded_file):
-            """Process the content of the uploaded file."""
-            try:
-                if uploaded_file and uploaded_file.type == "application/json":
-                    # Handle JSON file
-                    flow_no_mappings = json.loads(uploaded_file.getvalue().decode("utf-8"))
-                else:
-                    # Handle plain text file
-                    flow_no_mappings = parse_text_to_json_third_page(uploaded_file.getvalue().decode("utf-8"))
-                return {"flow_no_mappings":flow_no_mappings, "message" : "Questions and answers parsed successfully.✨", "error":None}
-            except Exception as e:
-                return {"flow_no_mappings":None,"message": None,"error": f"Error processing file: {e}"}
+def process_file_content(uploaded_file: UploadFile):
+    """Process the content of the uploaded file."""
+    try:
+        contents = uploaded_file.file.read()
+        if uploaded_file.content_type == "application/json":
+            # Handle JSON file
+            flow_no_mappings = json.loads(contents.decode("utf-8"))
+        else:
+            # Handle plain text file
+            flow_no_mappings = parse_text_to_json_third_page(contents.decode("utf-8"))
+        return {"flow_no_mappings": flow_no_mappings, "message": "Questions and answers parsed successfully.✨", "error": None}
+    except Exception as e:
+        return {"flow_no_mappings": None, "message": None, "error": f"Error processing file: {e}"}
+
             
 @router.get("/flatten_json_structure")
 def flatten_json_structure(flow_no_mappings):

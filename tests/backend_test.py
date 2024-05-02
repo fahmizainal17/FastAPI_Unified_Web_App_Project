@@ -106,9 +106,9 @@ def test_parse_text_to_json(text_content_input: UploadFile):
     assert parsed_data["Q1"]["answers"]["FlowNo_2=1"] == "Apple"
     assert parsed_data["Q2"]["answers"]["FlowNo_3=1"] == "Blue"
 
-def test_rename_columns(dataframe_input: pd.DataFrame):
+def test_rename_columns(create_data: pd.DataFrame):
     new_column_names = ['PhoneNumber', 'UserAction']
-    result = rename_columns(dataframe_input, new_column_names)
+    result = rename_columns(create_data, new_column_names)
     assert list(result.columns) == new_column_names
 
 # ---------------------------------------------------
@@ -133,28 +133,43 @@ def test_classify_income():
 
 @pytest.fixture
 def json_file_input():
-    data = json.dumps({
+    data = '{"Q1": {"question": "Did you vote in the Petaling Jaya Parliament?", "answers": {"FlowNo_2=1": "Yes", "FlowNo_2=2": "No"}}}'
+    return UploadFile(content=BytesIO(data.encode()), filename="test.json", content_type="application/json")
+
+
+@pytest.fixture
+def flow_no_mappings_input():
+    return {
         "Q1": {
-            "question": "What is your favorite sport?",
+            "question": "Did you vote in the Petaling Jaya Parliament?",
             "answers": {
-                "FlowNo_2=1": "Soccer",
-                "FlowNo_2=2": "Basketball"
+                "FlowNo_2=1": "Yes",
+                "FlowNo_2=2": "No"
             }
         }
-    })
-    return UploadFile(file=BytesIO(data.encode('utf-8')), filename="test.json", content_type="application/json")
+    }
+
 
 def test_process_file_content_json(json_file_input: UploadFile):
     result = process_file_content(json_file_input)
     assert result["message"] == "Questions and answers parsed successfully.✨"
     assert "Q1" in result["flow_no_mappings"]
-    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Soccer"
+    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Yes"
+    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=2"] == "No"
+
+
+@pytest.fixture
+def text_file_input():
+    content = "1. What is your favorite sport?\n   - Soccer\n   - Basketball\n2. What is your favorite color?\n   - Blue\n   - Red\n   - Green"
+    return UploadFile(content=BytesIO(content.encode()), filename="test.txt", content_type="text/plain")
+
 
 def test_process_file_content_text(text_file_input: UploadFile):
     result = process_file_content(text_file_input)
     assert result["message"] == "Questions and answers parsed successfully.✨"
     assert "Q1" in result["flow_no_mappings"]
-    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Coffee"
+    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Soccer"
+
 
 @pytest.fixture
 def flow_no_mappings_input():
