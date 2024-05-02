@@ -52,7 +52,7 @@ def test_second_page_parse_text_to_json():
         "   - Team B\n"
     )
     files = {'upload_file': ('test.txt', content, 'text/plain')}
-    response = client.post("/second_page/parse_texttojson", files=files)
+    response = client.post("/second_page/parse_text_to_json", files=files)
     assert response.status_code == 200
     assert "Q1" in response.json()
     assert "Q2" in response.json()

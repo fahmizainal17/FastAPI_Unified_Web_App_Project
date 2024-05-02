@@ -1,6 +1,5 @@
 import re
 from fastapi import APIRouter, UploadFile
-import json
 
 router = APIRouter(prefix="/second_page", tags=["Questionnaire_Definer"])
 
@@ -20,7 +19,7 @@ def parse_questions_and_answers(data):
         questions_and_answers[q_key] = {'question': question_text, 'answers': answers}
     return questions_and_answers
 
-@router.post("/parse_texttojson")
+@router.post("/parse_text_to_json")
 def parse_text_to_json(upload_file: UploadFile):
     """
     Converts structured text content into a JSON-like dictionary, parsing questions and their answers.

@@ -1,7 +1,5 @@
 import pandas as pd
-import numpy as np
 from fastapi import APIRouter
-from typing import Any 
 from io import StringIO
 
 router = APIRouter( prefix="/first_page", tags=["Data_Cleaner_Pre_Processor"])
