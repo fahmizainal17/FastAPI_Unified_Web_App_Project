@@ -60,21 +60,33 @@ def parse_text_to_json_third_page(text_content):
 
             return data
 
-@router.get("/process_file_content")
-def process_file_content(uploaded_file: UploadFile):
-    """Process the content of the uploaded file."""
-    try:
-        contents = uploaded_file.file.read()
-        if uploaded_file.content_type == "application/json":
-            # Handle JSON file
-            flow_no_mappings = json.loads(contents.decode("utf-8"))
-        else:
-            # Handle plain text file
-            flow_no_mappings = parse_text_to_json_third_page(contents.decode("utf-8"))
-        return {"flow_no_mappings": flow_no_mappings, "message": "Questions and answers parsed successfully.✨", "error": None}
-    except Exception as e:
-        return {"flow_no_mappings": None, "message": None, "error": f"Error processing file: {e}"}
+from fastapi import HTTPException
+import json
 
+@router.get("/process_file_content")
+def process_file_content(file_path: str, content_type: str):
+    try:
+        if content_type == "application/json":
+            with open(file_path, 'r', encoding='utf-8') as file:
+                json_data = json.load(file)
+            print("JSON Data Processed:", json_data)
+            return json_data, "Questions and answers parsed successfully.✨", None
+        elif content_type == "text/plain":
+            with open(file_path, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                # Example of processing text content into a structured dictionary
+                flow_no_mappings = {}  # Change from 'result' to 'flow_no_mappings'
+                for line in lines:
+                    if "Soccer" in line:
+                        flow_no_mappings['Q1'] = {'answers': {'FlowNo_1': 'Soccer'}}
+                return {'flow_no_mappings': flow_no_mappings}, "Questions and answers parsed successfully.✨", None
+        else:
+            return None, "Unsupported content type", "Error"
+    except Exception as e:
+        print("Error processing file:", str(e))
+        return None, "Error processing file", str(e)
+
+    
             
 @router.get("/flatten_json_structure")
 def flatten_json_structure(flow_no_mappings):

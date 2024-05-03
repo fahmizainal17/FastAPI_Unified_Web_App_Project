@@ -8,6 +8,7 @@ from tests.routers.test_second_page_module import parse_questions_and_answers, p
 from tests.routers.test_third_page_module import parse_text_to_json_third_page, custom_sort, classify_income, process_file_content, flatten_json_structure
 from fastapi import UploadFile
 from starlette.datastructures import UploadFile as StarletteUploadFile 
+from fastapi.datastructures import UploadFile
 from typing import Any
 
 # ---------------------------------------------------
@@ -131,11 +132,6 @@ def test_classify_income():
     assert classify_income("RM4,850 & below") == {"income_group": "B40"}
     assert classify_income("RM10,961 to RM15,039") == {"income_group": "T20"}
 
-@pytest.fixture
-def json_file_input():
-    data = '{"Q1": {"question": "Did you vote in the Petaling Jaya Parliament?", "answers": {"FlowNo_2=1": "Yes", "FlowNo_2=2": "No"}}}'
-    return UploadFile(content=BytesIO(data.encode()), filename="test.json", content_type="application/json")
-
 
 @pytest.fixture
 def flow_no_mappings_input():
@@ -149,26 +145,39 @@ def flow_no_mappings_input():
         }
     }
 
+@pytest.fixture
+def json_file_input(tmp_path):
+    data = '{"Q1": {"question": "Did you vote in the Petaling Jaya Parliament?", "answers": {"FlowNo_2=1": "Yes", "FlowNo_2=2": "No"}}}'
+    file_path = tmp_path / "test.json"
+    file_path.write_text(data, encoding='utf-8')
+    return str(file_path)
 
-def test_process_file_content_json(json_file_input: UploadFile):
-    result = process_file_content(json_file_input)
-    assert result["message"] == "Questions and answers parsed successfully.✨"
-    assert "Q1" in result["flow_no_mappings"]
-    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Yes"
-    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=2"] == "No"
 
+def test_process_file_content_json(json_file_input):
+    content_type = "application/json"
+    result, message, error = process_file_content(json_file_input, content_type)
+    expected_message = "Questions and answers parsed successfully.✨"
+    assert message.strip() == expected_message
+    assert "Q1" in result
+    assert result['Q1']['answers']['FlowNo_2=1'] == "Yes"
+    assert error is None
 
 @pytest.fixture
-def text_file_input():
+def text_file_input(tmp_path):
     content = "1. What is your favorite sport?\n   - Soccer\n   - Basketball\n2. What is your favorite color?\n   - Blue\n   - Red\n   - Green"
-    return UploadFile(content=BytesIO(content.encode()), filename="test.txt", content_type="text/plain")
+    file_path = tmp_path / "test.txt"
+    file_path.write_text(content, encoding='utf-8')
+    return str(file_path)
 
 
-def test_process_file_content_text(text_file_input: UploadFile):
-    result = process_file_content(text_file_input)
-    assert result["message"] == "Questions and answers parsed successfully.✨"
-    assert "Q1" in result["flow_no_mappings"]
-    assert result["flow_no_mappings"]["Q1"]["answers"]["FlowNo_2=1"] == "Soccer"
+def test_process_file_content_text(text_file_input):
+    content_type = "text/plain"
+    result, message, error = process_file_content(text_file_input, content_type)
+    expected_message = "Questions and answers parsed successfully.✨"
+    assert message == expected_message
+    assert 'flow_no_mappings' in result
+    assert "Q1" in result['flow_no_mappings']
+    assert result['flow_no_mappings']['Q1']['answers']['FlowNo_1'] == "Soccer"
 
 
 @pytest.fixture
