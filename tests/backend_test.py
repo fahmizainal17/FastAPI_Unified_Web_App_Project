@@ -11,6 +11,7 @@ from fastapi import UploadFile
 from starlette.datastructures import UploadFile as StarletteUploadFile 
 from fastapi.datastructures import UploadFile
 from typing import Any
+from pydantic import BaseModel
 
 # ---------------------------------------------------
 # Connection Test
@@ -102,25 +103,57 @@ def test_parse_questions_and_answers(json_data_input: UploadFile):
     assert parsed_data['Q1']['answers']['FlowNo_2=1'] == "Apple"
     assert parsed_data['Q2']['answers']['FlowNo_3=1'] == "Blue"
 
-def test_parse_text_to_json(text_content_input: UploadFile):
-    parsed_data = parse_text_to_json(text_content_input)
+class TextContent(BaseModel):
+    text_content: str
+
+def test_parse_text_to_json():
+    # Simulate the JSON input as it would be received from an API call
+    text_content = (
+        "1. What is your favorite fruit?\n"
+        "   - Apple\n"
+        "   - Banana\n\n"
+        "2. What is your favorite color?\n"
+        "   - Blue\n"
+        "   - Red\n"
+    )
+    input_data = TextContent(text_content=text_content)
+    parsed_data = parse_text_to_json(input_data)
+
+    # Now assert based on the expected results
     assert "Q1" in parsed_data and "Q2" in parsed_data
     assert parsed_data["Q1"]["answers"]["FlowNo_2=1"] == "Apple"
     assert parsed_data["Q2"]["answers"]["FlowNo_3=1"] == "Blue"
 
+# Define the Pydantic model for the test, if not already defined
+class RenameColumnsRequest(BaseModel):
+    columns: list
+    data: list
+    new_column_names: list
+
 def test_rename_columns(create_data: pd.DataFrame):
-    new_column_names = ['PhoneNumber', 'UserAction']
-    result = rename_columns(create_data, new_column_names)
-    assert list(result.columns) == new_column_names
+    request = RenameColumnsRequest(
+        columns=create_data.columns.tolist(),
+        data=create_data.values.tolist(),
+        new_column_names=['PhoneNumber', 'UserAction']
+    )
+    # Since `rename_columns` returns a list of dictionaries
+    result = rename_columns(request)
+    # Check if the new column names are present in each dictionary of the list
+    assert all('PhoneNumber' in row and 'UserAction' in row for row in result), "New column names not found in all rows"
+
 
 # ---------------------------------------------------
 # Third Page Module Tests
 # ---------------------------------------------------
 
+class TextContent(BaseModel):
+    text_content: str
+
 def test_parse_text_to_json_third_page(text_content_input: UploadFile):
     text_content_input.file.seek(0)
     content = text_content_input.file.read().decode('utf-8')
-    result = parse_text_to_json_third_page(content)
+    request = TextContent(text_content=content)
+    result = parse_text_to_json_third_page(request)
     assert "Q1" in result and "Q2" in result
     assert result["Q1"]["answers"]["FlowNo_2=1"] == "Apple"
     assert result["Q2"]["answers"]["FlowNo_3=1"] == "Blue"
@@ -193,10 +226,14 @@ def flow_no_mappings_input():
         }
     }
 
-def test_flatten_json_structure(flow_no_mappings_input: dict[str, dict[str, Any]]):
-    result = flatten_json_structure(flow_no_mappings_input)
-    assert "FlowNo_2=1" in result
-    assert result["FlowNo_2=1"] == "Reading"
+def test_flatten_json_structure(flow_no_mappings_input: dict):
+    # Wrap the input in the 'flow_no_mappings' key
+    wrapped_input = {"flow_no_mappings": flow_no_mappings_input}
+    
+    result = flatten_json_structure(wrapped_input)
+    assert "FlowNo_2=1" in result, "Key 'FlowNo_2=1' not found in the result."
+    assert result["FlowNo_2=1"] == "Reading", f"Expected 'Reading', got {result.get('FlowNo_2=1')}"
+
 
 # ---------------------------------------------------
 # Running Pytest Directly

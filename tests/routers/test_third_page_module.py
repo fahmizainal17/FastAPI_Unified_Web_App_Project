@@ -2,6 +2,8 @@ import re
 import json
 from fastapi import APIRouter
 from fastapi import UploadFile
+from typing import Dict, Any
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/third_page", tags=["Keypress_Decoder"])
 
@@ -25,13 +27,16 @@ def classify_income(income):
             elif income in ['RM15,040 & above', 'RM10,961 to RM15,039']:
                 return {"income_group":'T20'}
 
-@router.get("/parse_text_to_json_third_page")
-def parse_text_to_json_third_page(text_content):
+class TextContent(BaseModel):
+    text_content: str
+
+@router.post("/parse_text_to_json_third_page")
+def parse_text_to_json_third_page(input_data: TextContent):
             """
             Parses structured text containing survey questions and answers into a JSON-like dictionary.
             Adjusts FlowNo to start from 2 for the first question as specified.
             """
-
+            text_content = input_data.text_content
             # Initialize variables
             data = {}
             current_question = None
@@ -87,8 +92,13 @@ def process_file_content(file_path: str, content_type: str):
         return None, "Error processing file", str(e)
 
 @router.post("/flatten_json_structure")
-def flatten_json_structure(flow_no_mappings: dict):
-            """Flatten the JSON structure to simplify the mapping access."""
-            if not flow_no_mappings:
-                return {}
-            return {k: v for question in flow_no_mappings.values() for k, v in question["answers"].items()}
+def flatten_json_structure(input_data: Dict[str, Any]):
+    """Flatten the JSON structure to simplify the mapping access."""
+    # This checks if the input data is nested under 'flow_no_mappings' or directly contains the data
+    flow_no_mappings = input_data.get('flow_no_mappings', input_data)
+    
+    # Attempt to extract and flatten 'answers' from the questions
+    try:
+        return {k: v for question in flow_no_mappings.values() for k, v in question.get("answers", {}).items()}
+    except AttributeError:
+        raise HTTPException(status_code=400, detail="Invalid data structure")
