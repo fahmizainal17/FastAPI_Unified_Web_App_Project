@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 import pandas as pd
 from io import StringIO, BytesIO
@@ -146,14 +147,14 @@ def flow_no_mappings_input():
     }
 
 @pytest.fixture
-def json_file_input(tmp_path):
+def json_file_input(tmp_path: Path):
     data = '{"Q1": {"question": "Did you vote in the Petaling Jaya Parliament?", "answers": {"FlowNo_2=1": "Yes", "FlowNo_2=2": "No"}}}'
     file_path = tmp_path / "test.json"
     file_path.write_text(data, encoding='utf-8')
     return str(file_path)
 
 
-def test_process_file_content_json(json_file_input):
+def test_process_file_content_json(json_file_input: str):
     content_type = "application/json"
     result, message, error = process_file_content(json_file_input, content_type)
     expected_message = "Questions and answers parsed successfully.✨"
@@ -163,14 +164,14 @@ def test_process_file_content_json(json_file_input):
     assert error is None
 
 @pytest.fixture
-def text_file_input(tmp_path):
+def text_file_input(tmp_path: Path):
     content = "1. What is your favorite sport?\n   - Soccer\n   - Basketball\n2. What is your favorite color?\n   - Blue\n   - Red\n   - Green"
     file_path = tmp_path / "test.txt"
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
 
 
-def test_process_file_content_text(text_file_input):
+def test_process_file_content_text(text_file_input: str):
     content_type = "text/plain"
     result, message, error = process_file_content(text_file_input, content_type)
     expected_message = "Questions and answers parsed successfully.✨"

@@ -25,7 +25,7 @@ def classify_income(income):
             elif income in ['RM15,040 & above', 'RM10,961 to RM15,039']:
                 return {"income_group":'T20'}
 
-
+@router.get("/parse_text_to_json_third_page")
 def parse_text_to_json_third_page(text_content):
             """
             Parses structured text containing survey questions and answers into a JSON-like dictionary.
@@ -86,10 +86,8 @@ def process_file_content(file_path: str, content_type: str):
         print("Error processing file:", str(e))
         return None, "Error processing file", str(e)
 
-    
-            
-@router.get("/flatten_json_structure")
-def flatten_json_structure(flow_no_mappings):
+@router.post("/flatten_json_structure")
+def flatten_json_structure(flow_no_mappings: dict):
             """Flatten the JSON structure to simplify the mapping access."""
             if not flow_no_mappings:
                 return {}

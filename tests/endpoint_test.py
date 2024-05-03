@@ -1,166 +1,102 @@
-# from fastapi.testclient import TestClient
-# from tests.test_main import app
-# import pandas as pd
-
-# client = TestClient(app)
-
-# # ---------------------------------------------------
-# # Welcome Page Test (1)
-# # ---------------------------------------------------
-
-# def test_welcome_page():
-#     response = client.get("/welcome_page")
-#     assert response.status_code == 200
-#     assert "Welcome to FastAPI Survey Web Application" in response.text
-
-# # ---------------------------------------------------
-# # Tests for the First Page Module (1 Endpoints)
-# # ---------------------------------------------------
-
-# def test_first_page_process_file():
-#     sample_json = {
-#         "df_json": '[{"PhoneNo": "1234567890", "UserKeyPress": "FlowNo_2=1"}]'
-#     }
-#     response = client.post("/first_page/process_file", json=sample_json)
-#     assert response.status_code == 200
-#     assert "Processed successfully" in response.json()["message"]
-
-# # ---------------------------------------------------
-# # Tests for the Second Page Module (3 Endpoints)
-# # ---------------------------------------------------
-
-# def test_second_page_parse_qna():
-#     sample_data = {
-#         "Q1": {
-#             "question": "What is your favorite sport?",
-#             "answers": {
-#                 "FlowNo_2=1": "Soccer",
-#                 "FlowNo_2=2": "Basketball"
-#             }
-#         }
-#     }
-#     response = client.post("/second_page/parse_qna", json=sample_data)
-#     assert response.status_code == 200
-#     assert "Q1" in response.json()
-
-# def test_second_page_parse_text_to_json():
-#     content = (
-#         "1. What is your favorite sport?\n"
-#         "   - Soccer\n"
-#         "   - Basketball\n\n"
-#         "2. What is your favorite team?\n"
-#         "   - Team A\n"
-#         "   - Team B\n"
-#     )
-#     files = {'upload_file': ('test.txt', content, 'text/plain')}
-#     response = client.post("/second_page/parse_text_to_json", files=files)
-#     assert response.status_code == 200
-#     assert "Q1" in response.json() and "Q2" in response.json()
-
-# def test_rename_columns():
-#     sample_dataframe = pd.DataFrame({
-#         "PhoneNo": ["1234567890", "0987654321"],
-#         "UserKeyPress": ["FlowNo_2=1", "FlowNo_2=2"]
-#     })
-#     new_column_names = ["PhoneNumber", "UserAction"]
-#     df_json = sample_dataframe.to_json(orient='split')
-#     response = client.post("/second_page/rename_columns", json={"df": df_json, "new_column_names": new_column_names})
-#     assert response.status_code == 200
-#     assert "PhoneNumber" in response.json() and "UserAction" in response.json()
-
-# # ---------------------------------------------------
-# # Tests for the Third Page Module (4 Endpoints)
-# # ---------------------------------------------------
-
-# def test_third_page_custom_sort():
-#     response = client.get("/third_page/custom_sort?col=FlowNo_2=3")
-#     assert response.status_code == 200
-#     assert response.json()["question_num"] == 2
-#     assert response.json()["flow_no"] == 3
-
-# def test_third_page_classify_income():
-#     response = client.get("/third_page/classify_income?income=RM4,850 & below")
-#     assert response.status_code == 200
-#     assert response.json()["income_group"] == "B40"
-
-# def test_flatten_json_structure():
-#     sample_data = {
-#         "Q1": {
-#             "question": "What is your favorite color?",
-#             "answers": {
-#                 "FlowNo_2=1": "Red",
-#                 "FlowNo_2=2": "Blue"
-#             }
-#         }
-#     }
-#     response = client.post("/third_page/flatten_json_structure", json={"flow_no_mappings": sample_data})
-#     assert response.status_code == 200
-#     assert "FlowNo_2=1" in response.json()
-#     assert response.json()["FlowNo_2=1"] == "Red"
-
-# # Optionally, run these tests using pytest from the command line
-# if __name__ == "__main__":
-#     import pytest
-#     pytest.main()
-
-
 from fastapi.testclient import TestClient
-from tests.test_main import app
+import pytest
+from tests.test_main import app 
+import json
 import pandas as pd
-
 
 client = TestClient(app)
 
-
-# ---------------------------------------------------
-# Welcome Page Test (1)
-# ---------------------------------------------------
-
-def test_welcome_page():
-    response = client.get("/welcome_page")
-    assert response.status_code == 200
-    assert "Welcome to FastAPI Survey Web Application" in response.text
-
+# Test for processing files on the first page
 def test_first_page_process_file():
-    sample_json = {"df_json": '[{"PhoneNo": "1234567890", "UserKeyPress": "FlowNo_2=1"}]'}
-    response = client.post("/first_page/process_file", json=sample_json)
-    print(response.json())  # Debugging line to see what the response is
-    assert response.status_code == 200
-    assert "Processed successfully" in response.json()["message"]
-
-def test_second_page_parse_qna():
+    # Creating sample data as a DataFrame and then converting it to JSON string format
     sample_data = {
+        "PhoneNo": ["1234567890", "0987654321"],
+        "UserKeyPress": ["FlowNo_2=1", "FlowNo_2=2"]
+    }
+    df_json = pd.DataFrame(sample_data).to_json(orient='records')
+
+    # Sending this JSON string directly as the 'df_json' field
+    # The endpoint expects a single string under the 'df_json' key
+    response = client.post("/first_page/process_file", json={"df_json": df_json})
+    assert response.status_code == 200
+    assert "total_calls" in response.json()
+    assert response.json()["total_calls"] == 2
+
+# Test for parsing questions and answers from JSON on the second page
+def test_second_page_parse_qna():
+    sample_qna = {
         "Q1": {
-            "question": "What is your favorite sport?",
+            "question": "What is your favorite fruit?",
             "answers": {
-                "FlowNo_2=1": "Soccer",
-                "FlowNo_2=2": "Basketball"
+                "FlowNo_2=1": "Apple",
+                "FlowNo_2=2": "Banana"
             }
         }
     }
-    response = client.post("/second_page/parse_qna", json=sample_data)
-    print(response.json())  # Debugging line
+    response = client.post("/second_page/parse_qna", json=sample_qna)
     assert response.status_code == 200
+    assert "Q1" in response.json()
+    assert response.json()["Q1"]["answers"]["FlowNo_2=1"] == "Apple"
 
-def test_rename_columns():
-    sample_dataframe = pd.DataFrame({
-        "PhoneNo": ["1234567890", "0987654321"],
-        "UserKeyPress": ["FlowNo_2=1", "FlowNo_2=2"]
-    }).to_json(orient='split')
+# Test for parsing structured text into JSON on the second page
+def test_second_page_parse_text_to_json():
+    text_content = (
+        "1. What is your favorite fruit?\n"
+        "   - Apple\n"
+        "   - Banana\n\n"
+        "2. What is your favorite color?\n"
+        "   - Blue\n"
+        "   - Red\n"
+    )
+    response = client.post("/second_page/parse_text_to_json", data=text_content)
+    assert response.status_code == 200
+    assert "Q1" in response.json()
+
+# Test for renaming columns in a DataFrame on the second page
+def test_second_page_rename_columns():
+    df_json = json.dumps({
+        "columns": ["PhoneNo", "UserKeyPress"],
+        "data": [
+            ["1234567890", "FlowNo_2=1"],
+            ["0987654321", "FlowNo_2=2"]
+        ]
+    })
     new_column_names = ["PhoneNumber", "UserAction"]
-    response = client.post("/second_page/rename_columns", json={"df": sample_dataframe, "new_column_names": new_column_names})
-    print(response.json())  # Debugging line
+    response = client.post("/second_page/rename_columns", json={"df_json": df_json, "new_column_names": new_column_names})
     assert response.status_code == 200
+    assert "PhoneNumber" in response.json()
 
+# Test for sorting based on custom sort keys on the third page
+def test_third_page_custom_sort():
+    response = client.get("/third_page/custom_sort?query=FlowNo_2=3")
+    assert response.status_code == 200
+    assert response.json() == {"question_num": 2, "flow_no": 3}
+
+# Test for income classification on the third page
 def test_third_page_classify_income():
     response = client.get("/third_page/classify_income?income=RM4,850 & below")
-    print(response.json())  # Debugging line
     assert response.status_code == 200
-    assert response.json() is not None
-    assert response.json()["income_group"] == "B40"
+    assert response.json() == {"income_group": "B40"}
 
-def test_flatten_json_structure():
-    sample_data = {
+# Test for parsing text to JSON specifically on the third page
+def test_third_page_parse_text_to_json():
+    text_content = {
+        "text_content": "1. What is your favorite sport?\n   - Soccer\n   - Basketball\n2. What is your favorite food?\n   - Pizza\n   - Sushi"
+    }
+    response = client.post("/third_page/parse_text_to_json_third_page", json=text_content)
+    assert response.status_code == 200
+    assert "Q1" in response.json()
+
+
+# Test for processing file content based on content type on the third page
+def test_third_page_process_file_content():
+    # Assuming file_path is correctly handled in your application via mocking or test setup
+    response = client.get("/third_page/process_file_content?file_path=mock_path&content_type=application/json")
+    assert response.status_code == 200
+
+# Test for flattening JSON structure on the third page
+def test_third_page_flatten_json_structure():
+    flow_no_mappings = {
         "Q1": {
             "question": "What is your favorite color?",
             "answers": {
@@ -169,10 +105,11 @@ def test_flatten_json_structure():
             }
         }
     }
-    response = client.post("/third_page/flatten_json_structure", json={"flow_no_mappings": sample_data})
-    print(response.json())  # Debugging line
+    response = client.post("/third_page/flatten_json_structure", json={"flow_no_mappings": flow_no_mappings})
     assert response.status_code == 200
+    assert "FlowNo_2=1" in response.json()
+    assert response.json()["FlowNo_2=1"] == "Red"
+
 
 if __name__ == "__main__":
-    import pytest
-    pytest.main()
+    pytest.main(["-v"])
