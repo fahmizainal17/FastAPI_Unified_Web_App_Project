@@ -1,14 +1,14 @@
 from pathlib import Path
 import pytest
 import pandas as pd
-from io import StringIO, BytesIO
+from io import BytesIO
 import json
 from tests.test_main import app
-from tests.routers.test_first_page_module import merger, process_file
+from tests.routers.test_first_page_module import merger, process_file, FileProcessRequest
 from tests.routers.test_second_page_module import parse_questions_and_answers, parse_text_to_json, rename_columns ,Questionnaire
 from tests.routers.test_third_page_module import parse_text_to_json_third_page, custom_sort, classify_income, process_file_content, flatten_json_structure
 from fastapi import UploadFile
-from starlette.datastructures import UploadFile as StarletteUploadFile 
+from starlette.datastructures import UploadFile
 from fastapi.datastructures import UploadFile
 from typing import Any
 from pydantic import BaseModel
@@ -27,13 +27,12 @@ def read_main():
 
 @pytest.fixture
 def create_data():
-    """Fixture for creating DataFrame input for testing."""
+    """Fixture to create DataFrame input for testing."""
     data = [
         {"PhoneNo": "1234567890", "UserKeyPress": "FlowNo_2=1"},
         {"PhoneNo": "0987654321", "UserKeyPress": "FlowNo_2=2"}
     ]
-    data_json = json.dumps(data)
-    return pd.read_json(StringIO(data_json), orient='records')
+    return pd.DataFrame(data)
 
 def test_merger(create_data: pd.DataFrame):
     df_list = [create_data]
@@ -47,14 +46,15 @@ def test_merger(create_data: pd.DataFrame):
 
 def test_process_file(create_data: pd.DataFrame):
     df_json = create_data.to_json(orient='records')
-    result = process_file(df_json)
-    
+    request = FileProcessRequest(df_json=df_json)  # Creating a Pydantic model instance
+    result = process_file(request)  # Directly invoking the function with the correct input
+
     assert 'df_complete' in result
     assert len(result['df_complete']) == 2  # Expecting 2 entries after processing
     assert result['total_calls'] == 2
     assert result['total_pickup'] == 2
     assert 'df_merge' in result
-    assert not result['df_merge'].empty  # Should not be empty
+    assert len(result['df_merge']) > 0  # Ensuring df_merge is not empty
 
 # ---------------------------------------------------
 # Second Page Module Tests
@@ -143,7 +143,6 @@ def test_rename_columns(create_data: pd.DataFrame):
     result = rename_columns(request)
     # Check if the new column names are present in each dictionary of the list
     assert all('PhoneNumber' in row and 'UserAction' in row for row in result), "New column names not found in all rows"
-
 
 # ---------------------------------------------------
 # Third Page Module Tests

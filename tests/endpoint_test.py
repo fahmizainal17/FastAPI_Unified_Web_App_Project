@@ -70,8 +70,6 @@ def test_second_page_rename_columns():
     assert "PhoneNumber" in response.json()[0] and "UserAction" in response.json()[0], "New column names are not in the response"
 
 
-
-
 # Test for sorting based on custom sort keys on the third page
 def test_third_page_custom_sort():
     response = client.get("/third_page/custom_sort", params={"col": "FlowNo_2=3"})
