@@ -9,9 +9,6 @@ from fastapi import HTTPException
 
 router = APIRouter(prefix="/second_page", tags=["Questionnaire_Definer"])
 
-class Answer(BaseModel):
-    answer: str
-
 class Question(BaseModel):
     question: str
     answers: Dict[str, str]
@@ -71,3 +68,4 @@ def rename_columns(request: RenameColumnsRequest):
     df = pd.DataFrame(data=request.data, columns=request.columns)
     df = df.rename(columns=dict(zip(df.columns, request.new_column_names)), inplace=False)
     return df.to_dict(orient='records')
+

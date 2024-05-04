@@ -15,7 +15,6 @@ def test_first_page_process_file():
     df = pd.DataFrame(sample_data)
     df_json = df.to_json(orient='records')  # DataFrame to JSON string
 
-    # Send this JSON string correctly wrapped in another JSON under the key 'df_json'
     response = client.post("/first_page/process_file", json={"df_json": df_json})
     assert response.status_code == 200
     assert "total_calls" in response.json()
@@ -68,8 +67,8 @@ def test_second_page_rename_columns():
     }
     response = client.post("/second_page/rename_columns", json=df_json)
     assert response.status_code == 200
-    # Ensure that the response contains the new column names in the first dictionary of the returned list
     assert "PhoneNumber" in response.json()[0] and "UserAction" in response.json()[0], "New column names are not in the response"
+
 
 
 

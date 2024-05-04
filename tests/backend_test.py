@@ -5,7 +5,7 @@ from io import StringIO, BytesIO
 import json
 from tests.test_main import app
 from tests.routers.test_first_page_module import merger, process_file
-from tests.routers.test_second_page_module import parse_questions_and_answers, parse_text_to_json, rename_columns
+from tests.routers.test_second_page_module import parse_questions_and_answers, parse_text_to_json, rename_columns ,Questionnaire
 from tests.routers.test_third_page_module import parse_text_to_json_third_page, custom_sort, classify_income, process_file_content, flatten_json_structure
 from fastapi import UploadFile
 from starlette.datastructures import UploadFile as StarletteUploadFile 
@@ -62,24 +62,26 @@ def test_process_file(create_data: pd.DataFrame):
 
 @pytest.fixture
 def json_data_input():
-    data = json.dumps({
-        "Q1": {
-            "question": "What is your favorite fruit?",
-            "answers": {
-                "FlowNo_2=1": "Apple",
-                "FlowNo_2=2": "Banana"
-            }
-        },
-        "Q2": {
-            "question": "What is your favorite color?",
-            "answers": {
-                "FlowNo_3=1": "Blue",
-                "FlowNo_3=2": "Red",
-                "FlowNo_3=3": "Green"
+    data = {
+        "questions": {
+            "Q1": {
+                "question": "What is your favorite fruit?",
+                "answers": {
+                    "FlowNo_2=1": "Apple",
+                    "FlowNo_2=2": "Banana"
+                }
+            },
+            "Q2": {
+                "question": "What is your favorite color?",
+                "answers": {
+                    "FlowNo_3=1": "Blue",
+                    "FlowNo_3=2": "Red",
+                    "FlowNo_3=3": "Green"
+                }
             }
         }
-    })
-    return UploadFile(file=BytesIO(data.encode('utf-8')), filename="test.json")
+    }
+    return UploadFile(file=BytesIO(json.dumps(data).encode('utf-8')), filename="test.json")
 
 @pytest.fixture
 def text_content_input():
@@ -97,7 +99,8 @@ def text_content_input():
 def test_parse_questions_and_answers(json_data_input: UploadFile):
     json_data_input.file.seek(0)  # Rewind the file to the start
     data = json.load(json_data_input.file)  # Reading and decoding JSON data correctly
-    parsed_data = parse_questions_and_answers(data)
+    questionnaire = Questionnaire(**data)  # Create a Pydantic model instance with the loaded data
+    parsed_data = parse_questions_and_answers(questionnaire)  # Pass the Pydantic model to the function
     assert isinstance(parsed_data, dict)
     assert 'Q1' in parsed_data and 'Q2' in parsed_data
     assert parsed_data['Q1']['answers']['FlowNo_2=1'] == "Apple"
