@@ -1,9 +1,8 @@
 import re
-from fastapi import APIRouter, UploadFile
-from pydantic import BaseModel, Field
+from fastapi import APIRouter
 from typing import List
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Dict, List
 from fastapi import HTTPException
 

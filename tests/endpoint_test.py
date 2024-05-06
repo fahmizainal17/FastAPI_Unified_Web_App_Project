@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 import pytest
 from tests.test_main import app 
-import json
 import pandas as pd
 
 client = TestClient(app)
@@ -19,7 +18,6 @@ def test_first_page_process_file():
     assert response.status_code == 200
     assert "total_calls" in response.json()
     assert response.json()["total_calls"] == 2
-
 
 # Test for parsing questions and answers from JSON on the second page
 def test_second_page_parse_qna():
@@ -39,7 +37,6 @@ def test_second_page_parse_qna():
     assert "Q1" in response.json()
     assert response.json()["Q1"]["answers"]["FlowNo_2=1"] == "Apple"
 
-
 # Test for parsing structured text into JSON on the second page
 def test_second_page_parse_text_to_json():
     text_content = (
@@ -54,7 +51,6 @@ def test_second_page_parse_text_to_json():
     assert response.status_code == 200
     assert "Q1" in response.json()
 
-
 # Test for renaming columns in a DataFrame on the second page
 def test_second_page_rename_columns():
     df_json = {
@@ -68,7 +64,6 @@ def test_second_page_rename_columns():
     response = client.post("/second_page/rename_columns", json=df_json)
     assert response.status_code == 200
     assert "PhoneNumber" in response.json()[0] and "UserAction" in response.json()[0], "New column names are not in the response"
-
 
 # Test for sorting based on custom sort keys on the third page
 def test_third_page_custom_sort():
@@ -88,8 +83,6 @@ def test_third_page_parse_text_to_json():
     response = client.post("/third_page/parse_text_to_json_third_page", json={"text_content": text_content})
     assert response.status_code == 200
     assert "Q1" in response.json()
-
-
 
 # Test for processing file content based on content type on the third page
 def test_third_page_process_file_content():
@@ -114,8 +107,6 @@ def test_third_page_flatten_json_structure():
     assert response.status_code == 200
     assert "FlowNo_2=1" in response.json()
     assert response.json()["FlowNo_2=1"] == "Red"
-
-
 
 if __name__ == "__main__":
     pytest.main(["-v"])

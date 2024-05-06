@@ -59,7 +59,6 @@ def root():
     """
     return HTMLResponse(content=html_content)
 
-
 app.include_router(first_page_router, tags=["Data_Cleaner_Pre_Processor"])
 app.include_router(second_page_router, tags=["Questionnaire_Definer"])
 app.include_router(third_page_router, tags=["Keypress_Decoder"])
