@@ -168,7 +168,6 @@ def test_classify_income():
     assert classify_income("RM4,850 & below") == {"income_group": "B40"}
     assert classify_income("RM10,961 to RM15,039") == {"income_group": "T20"}
 
-
 @pytest.fixture
 def flow_no_mappings_input():
     return {
@@ -188,7 +187,6 @@ def json_file_input(tmp_path: Path):
     file_path.write_text(data, encoding='utf-8')
     return str(file_path)
 
-
 def test_process_file_content_json(json_file_input: str):
     content_type = "application/json"
     result, message, error = process_file_content(json_file_input, content_type)
@@ -205,7 +203,6 @@ def text_file_input(tmp_path: Path):
     file_path.write_text(content, encoding='utf-8')
     return str(file_path)
 
-
 def test_process_file_content_text(text_file_input: str):
     content_type = "text/plain"
     result, message, error = process_file_content(text_file_input, content_type)
@@ -214,7 +211,6 @@ def test_process_file_content_text(text_file_input: str):
     assert 'flow_no_mappings' in result
     assert "Q1" in result['flow_no_mappings']
     assert result['flow_no_mappings']['Q1']['answers']['FlowNo_1'] == "Soccer"
-
 
 @pytest.fixture
 def flow_no_mappings_input():
@@ -235,7 +231,6 @@ def test_flatten_json_structure(flow_no_mappings_input: dict):
     result = flatten_json_structure(wrapped_input)
     assert "FlowNo_2=1" in result, "Key 'FlowNo_2=1' not found in the result."
     assert result["FlowNo_2=1"] == "Reading", f"Expected 'Reading', got {result.get('FlowNo_2=1')}"
-
 
 # ---------------------------------------------------
 # Running Pytest Directly
