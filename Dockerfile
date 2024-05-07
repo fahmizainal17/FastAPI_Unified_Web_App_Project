@@ -23,7 +23,7 @@ COPY ./app ${LAMBDA_TASK_ROOT}/app
 WORKDIR ${LAMBDA_TASK_ROOT}/app
 COPY ./app/requirements.txt ${LAMBDA_TASK_ROOT}/app
 RUN pip install --no-cache-dir -r requirements.txt 
-
+#
 RUN echo "### --- Install spacy -- ###"
 RUN python3 -m spacy download en_core_web_md
 ENV FASTAPI_APP=main.py
