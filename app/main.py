@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from app.routers.first_page_module import router as first_page_router
-from app.routers.second_page_module import router as second_page_router
-from app.routers.third_page_module import router as third_page_router
+from tests.routers.test_first_page_module import router as first_page_router
+from tests.routers.test_second_page_module import router as second_page_router
+from tests.routers.test_third_page_module import router as third_page_router
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
@@ -14,10 +14,6 @@ app = FastAPI(
       docs_url="/docs",
       openapi_url="/openapi.json",
 )
-
-# @app.get("/", status_code=status.HTTP_200_OK)
-# def root():
-#     return {"message": "Welcome to the root of the FastAPI Survey Web Application!"} ###
 
 @app.get("/", response_class=HTMLResponse, summary="Welcome_Page", tags= ["Root_Of_FastAPI_Application"])
 def root():
@@ -58,7 +54,6 @@ def root():
     </html>
     """
     return HTMLResponse(content=html_content)
-
 
 app.include_router(first_page_router, tags=["Data_Cleaner_Pre_Processor"])
 app.include_router(second_page_router, tags=["Questionnaire_Definer"])
